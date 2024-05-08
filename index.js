@@ -32,7 +32,7 @@ const verifyToken = async (req, res, next) => {
 
 // middleware
 app.use(cors({
-    origin: ['http://localhost:5173'],
+    origin: ['http://localhost:5173', 'https://car-doctor-ph-7717.web.app'],
     credentials: true,
 }));
 app.use(express.json());
@@ -52,6 +52,12 @@ const client = new MongoClient(uri, {
     }
 });
 
+const cookeOption = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production' ? true : false,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+}
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -68,13 +74,7 @@ async function run() {
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
 
             res
-                .cookie('token', token, {
-                    httpOnly: true,
-                    secure: true,
-                    sameSite: 'none',
-                    // secure: process.env.NODE_ENV === 'production',
-                    // sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-                })
+                .cookie('token', token, cookeOption)
                 .send({ success: true })
         })
 
@@ -82,7 +82,7 @@ async function run() {
         app.post('/logout', async (req, res) => {
             const user = req.body;
             console.log('logging out', user)
-            res.clearCookie('token', { maxAge: 0 }).send({ success: true })
+            res.clearCookie('token', {...cookeOption ,maxAge: 0 }).send({ success: true })
         })
 
 
